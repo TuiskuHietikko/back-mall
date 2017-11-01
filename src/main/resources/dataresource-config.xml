@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!--1:配置数据库相关参数-->
+    <!--<context:property-placeholder location="jdbc.properties"/>-->
+    <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="location" value="classpath:jdbc.properties"/>
+    </bean>
+
+    <!--2：数据库连接池-->
+    <!--<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">-->
+        <!--&lt;!&ndash;配置数据库链接池属性&ndash;&gt;-->
+        <!--<property name="driverClass" value="${driver}"/>-->
+        <!--<property name="jdbcUrl" value="${url}"/>-->
+        <!--<property name="user" value="${username}"/>-->
+        <!--<property name="password" value="${password}"/>-->
+
+        <!--&lt;!&ndash;配置数据库私有属性&ndash;&gt;-->
+
+        <!--&lt;!&ndash;关闭连接后不自动commit&ndash;&gt;-->
+        <!--<property name="autoCommitOnClose" value="false"/>-->
+        <!--<property name="checkoutTimeout" value="30000"/>-->
+        <!--&lt;!&ndash;默认失败重新连接次数&ndash;&gt;-->
+        <!--<property name="acquireIncrement" value="${c3p0.acquireIncrement}"/>-->
+        <!--<property name="initialPoolSize" value="${c3p0.initialPoolSize}"/>-->
+        <!--<property name="maxPoolSize" value="${c3p0.minPoolSize}"/>-->
+        <!--<property name="minPoolSize" value="${c3p0.maxPoolSize}"/>-->
+        <!--<property name="maxIdleTime" value="${c3p0.maxIdleTime}"/>-->
+
+        <!--<property name="preferredTestQuery" value="SELECT 1"/>-->
+        <!--<property name="idleConnectionTestPeriod" value="18000"/>-->
+        <!--<property name="testConnectionOnCheckout" value="true"/>-->
+
+    <!--</bean>-->
+    <bean id="log4j2-filter" class="com.alibaba.druid.filter.logging.Log4j2Filter">
+        <property name="connectionLogEnabled" value="false"/>
+        <property name="statementLogEnabled" value="false"/>
+        <property name="resultSetLogEnabled" value="true"/>
+        <property name="statementExecutableSqlLogEnable" value="true"/>
+    </bean>
+    <!-- 慢SQL记录  edited by zhangpl 20140824  start-->
+    <bean id="stat-filter" class="com.alibaba.druid.filter.stat.StatFilter">
+        <property name="mergeSql" value="true" />
+        <property name="slowSqlMillis" value="200" />
+        <property name="logSlowSql" value="true" />
+    </bean>
+    <!-- 阿里 druid 数据库连接池 -->
+    <bean id = "dataSource" class = "com.alibaba.druid.pool.DruidDataSource" destroy-method = "close" >
+        <!-- 数据库基本信息配置 -->
+        <property name = "url" value = "${url}" />
+        <property name = "username" value = "${username}" />
+        <property name = "password" value = "${password}" />
+        <property name = "driverClassName" value = "${driver}" />
+        <property name = "filters" value = "${filters}" />
+        <property name="proxyFilters">
+            <list>
+                <ref bean="log4j2-filter" />
+                <ref bean="stat-filter" />
+            </list>
+        </property>
+
+        <!-- 最大并发连接数 -->
+        <property name = "maxActive" value = "${maxActive}" />
+
+        <!-- 初始化连接数量 -->
+        <property name = "initialSize" value = "${initialSize}" />
+
+        <!-- 配置获取连接等待超时的时间 -->
+        <property name = "maxWait" value = "${maxWait}" />
+
+        <!-- 最小空闲连接数 -->
+        <property name = "minIdle" value = "${minIdle}" />
+
+        <!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒 -->
+        <property name = "timeBetweenEvictionRunsMillis" value ="${timeBetweenEvictionRunsMillis}" />
+
+        <!-- 配置一个连接在池中最小生存的时间，单位是毫秒 -->
+        <property name = "minEvictableIdleTimeMillis" value ="${minEvictableIdleTimeMillis}" />
+
+        <property name = "validationQuery" value = "${validationQuery}" />
+        <property name = "testWhileIdle" value = "${testWhileIdle}" />
+        <property name = "testOnBorrow" value = "${testOnBorrow}" />
+        <property name = "testOnReturn" value = "${testOnReturn}" />
+        <property name = "maxOpenPreparedStatements" value ="${maxOpenPreparedStatements}" />
+
+        <!-- 打开 removeAbandoned 功能 -->
+        <property name = "removeAbandoned" value = "${removeAbandoned}" />
+
+        <!-- 1800 秒，也就是 30 分钟 -->
+        <property name = "removeAbandonedTimeout" value ="${removeAbandonedTimeout}" />
+
+        <!-- 关闭 abanded 连接时输出错误日志 -->
+        <property name = "logAbandoned" value = "${logAbandoned}" />
+    </bean >
+
+    <!--3:配置sqlSessionFactory-->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="configLocation" value="classpath:mybatis-config.xml"/>
+        <property name="typeAliasesPackage" value="com.wxjy.back.entity"/>
+        <!--扫描所有的Mapper文件-->
+        <property name="mapperLocations" value="classpath:mapper/**/*.xml"/>
+    </bean>
+
+    <!--扫描dao接口包，注入-->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+        <property name="basePackage" value="com.wxjy.back.dao"/>
+    </bean>
+
+</beans>
